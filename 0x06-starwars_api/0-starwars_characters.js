@@ -1,13 +1,14 @@
 #!/usr/bin/node
 
 const request = require('request');
-const movieId = process.argv[2];
-const url = `https://swapi-api.alx-tools.com/api/films/${movieId}`;
 
-if (!movieId) {
-  console.error('Usage: ./0-starwars_characters.js <Movie ID>');
+if (process.argv.length < 3) {
+  console.error('Usage: ./0-starwars_characters.js <movie_id>');
   process.exit(1);
 }
+
+const movieId = process.argv[2];
+const url = `https://swapi-api.alx-tools.com/api/films/${movieId}/`;
 
 request(url, (error, response, body) => {
   if (error) {
@@ -15,22 +16,26 @@ request(url, (error, response, body) => {
     return;
   }
 
-  const data = JSON.parse(body);
-
-  if (!data.characters || data.characters.length === 0) {
-    console.error('No characters found for the given movie ID.');
+  if (response.statusCode !== 200) {
+    console.error(`Error: ${response.statusCode}`);
     return;
   }
 
-  const characters = data.characters;
-  characters.forEach((characterUrl) => {
-    request(characterUrl, (error, response, body) => {
-      if (error) {
-        console.error(error);
+  const film = JSON.parse(body);
+  film.characters.forEach(characterUrl => {
+    request(characterUrl, (err, resp, charBody) => {
+      if (err) {
+        console.error(err);
         return;
       }
-      const characterData = JSON.parse(body);
-      console.log(characterData.name);
+
+      if (resp.statusCode !== 200) {
+        console.error(`Error: ${resp.statusCode}`);
+        return;
+      }
+
+      const character = JSON.parse(charBody);
+      console.log(character.name);
     });
   });
 });
